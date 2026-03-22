@@ -1,5 +1,5 @@
 
-﻿# 🏥 Clinical AI — Decision Support System
+🏥 Clinical AI — Decision Support System
 
 An AI-powered clinical decision support system designed to predict 30-day hospital readmission risk using machine learning and explainable AI (XAI).
 
