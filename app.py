@@ -1,64 +1,93 @@
+# ================= IMPORT =================
 import streamlit as st
 import pandas as pd
 import joblib
 import plotly.graph_objects as go
+import shap
+import matplotlib.pyplot as plt
 import qrcode
-import hashlib
 from xgboost import XGBClassifier
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import *
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from io import BytesIO
 from datetime import datetime
 
-# =====================================================
-# PAGE CONFIG
-# =====================================================
-st.set_page_config(page_title="Clinical AI", layout="wide")
+# ================= CONFIG =================
+st.set_page_config(page_title="Clinical AI — Decision Support System", page_icon="🏥", layout="wide")
 
-# =====================================================
-# MODERN CLEAN MEDICAL UI
-# =====================================================
-st.markdown("""
+# ================= UI STYLE =================
+
+bg = "linear-gradient(135deg,#0f172a,#020617)"
+card_bg = "#111827"
+text_color = "#f9fafb"
+
+st.markdown(f"""
+            
 <style>
-.main {
-    background: linear-gradient(135deg, #f4f8fc, #eef3f9);
-}
-.risk-card {
-    background: linear-gradient(135deg, #1c5d99, #4f9ed6);
-    color: white;
-    padding: 60px;
-    border-radius: 20px;
-    text-align: center;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-}
-.risk-number {
-    font-size: 56px;
-    font-weight: 800;
-}
-.risk-label {
-    font-size: 22px;
-    margin-top: 10px;
-}
+
+/* ===== GLOBAL ===== */
+.stApp {{
+    background: {bg};
+    color: {text_color};
+}}
+
+.block-container {{
+    padding-top: 2,5rem;
+}}
+
+/* ===== CARD ===== */
+.card {{
+    background:{card_bg};
+    color:{text_color};
+    padding:18px;
+    border-radius:14px;
+    margin-top:12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}}
+
+/* ===== RISK BOX ===== */
+.risk-box {{
+    padding:25px;
+    border-radius:20px;
+    text-align:center;
+    color:white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+}}
+
+.high {{background: linear-gradient(135deg,#ef4444,#dc2626);}}
+.medium {{background: linear-gradient(135deg,#f59e0b,#fbbf24);}}
+.low {{background: linear-gradient(135deg,#22c55e,#16a34a);}}
+
+.big {{
+    font-size:46px;
+    font-weight:700;
+}}
+
+/* ===== BUTTON ===== */
+.stButton>button {{
+    width:100%;
+    border-radius:10px;
+    height:45px;
+    font-weight:600;
+}}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {{
+    .big {{font-size:32px;}}
+    .risk-box {{padding:20px;}}
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
-st.set_page_config(
-    page_title="Clinical AI",
-    page_icon="🏥",   
-    layout="wide"
-)
+st.title("🏥 Clinical AI — Decision Support System")
+st.caption("AI-Powered 30-Day Readmission Risk Prediction")
 
-st.title("🏥 Clinical AI — Hospital Decision Support System")
-st.caption("30-Day Readmission Risk Prediction | Official Clinical Prototype")
-
-st.markdown("---")
-
-# =====================================================
-# LOAD MODEL
-# =====================================================
+# ================= LOAD MODEL =================
 @st.cache_resource
 def load_model():
     model = XGBClassifier()
@@ -68,55 +97,125 @@ def load_model():
 
 model, feature_columns = load_model()
 
-# =====================================================
-# INPUT SECTION
-# =====================================================
-st.markdown("### Patient Clinical Profile")
+def explain_icd(icd):
+    if not icd:
+        return "Unknown condition"
 
-col1, col2, col3 = st.columns(3)
+    code = icd.upper()[0]
+
+    if code in ["A", "B"]:
+        return "Infectious and parasitic diseases"
+    elif code in ["C", "D"]:
+        return "Neoplasms (cancer and tumors)"
+    elif code == "E":
+        return "Endocrine, nutritional and metabolic diseases"
+    elif code == "F":
+        return "Mental and behavioral disorders"
+    elif code == "G":
+        return "Diseases of the nervous system"
+    elif code == "H":
+        return "Diseases of the eye and ear"
+    elif code == "I":
+        return "Cardiovascular diseases"
+    elif code == "J":
+        return "Respiratory diseases"
+    elif code == "K":
+        return "Digestive system diseases"
+    elif code == "L":
+        return "Skin diseases"
+    elif code == "M":
+        return "Musculoskeletal diseases"
+    elif code == "N":
+        return "Genitourinary diseases"
+    elif code == "O":
+        return "Pregnancy and childbirth"
+    elif code == "P":
+        return "Perinatal conditions"
+    elif code == "Q":
+        return "Congenital abnormalities"
+    elif code == "R":
+        return "Symptoms and abnormal findings"
+    elif code in ["S", "T"]:
+        return "Injury and poisoning"
+    elif code in ["V", "W", "X", "Y"]:
+        return "External causes of morbidity"
+    elif code == "Z":
+        return "Factors influencing health status"
+    
+    return "Unknown medical condition"
+# ================= CLINICAL REASONING =================
+def clinical_reasoning():
+    r = []
+    if age >= 65: r.append("Advanced age reduces physiological reserve.")
+    if los >= 7: r.append("Prolonged hospitalization indicates severe condition.")
+    if prev_adm >= 2: r.append("Frequent admissions indicate instability.")
+    if avg_creatinine > 2: r.append("Renal impairment affects recovery.")
+    if avg_glucose > 200: r.append("Hyperglycemia increases complication risk.")
+    if avg_hemoglobin < 10: r.append("Anemia delays recovery.")
+    if num_medications >= 15: r.append("Polypharmacy increases treatment risk.")
+    return r
+
+# ================= SHAP INTERPRETATION =================
+def shap_interpretation(input_data, shap_values):
+    explanations = []
+    for i, col in enumerate(input_data.columns):
+        val = shap_values[0][i]
+        if abs(val) < 0.05:
+            continue
+        impact = "increases" if val > 0 else "reduces"
+        explanations.append(f"{col.replace('_',' ')} {impact} risk (impact={val:.2f})")
+    return explanations
+
+# ================= RISK BREAKDOWN =================
+def risk_breakdown(input_data, shap_values):
+    data = [(col, shap_values[0][i]) for i, col in enumerate(input_data.columns)]
+    return sorted(data, key=lambda x: abs(x[1]), reverse=True)
+
+def model_confidence(prob):
+    if prob >= 0.8 or prob <= 0.2:
+        return "HIGH CONFIDENCE"
+    elif prob >= 0.6 or prob <= 0.4:
+        return "MODERATE CONFIDENCE"
+    else:
+        return "LOW CONFIDENCE"
+
+# ================= INPUT =================
+col1,col2,col3 = st.columns(3)
 
 with col1:
-    age = st.number_input("Age (years)", 18, 120, 65)
-    gender = st.selectbox("Gender", ["Male", "Female"])
+    age = st.number_input("Age",18,120,65)
+    gender = st.selectbox("Gender",["Male","Female"])
 
 with col2:
-    los = st.number_input("Length of Stay (days)", 1, 60, 7)
-    prev_adm = st.number_input("Previous Admissions (6 months)", 0, 20, 2)
+    los = st.number_input("Length of Stay",1,60,7)
+    prev_adm = st.number_input("Previous Admissions",0,20,2)
 
 with col3:
-    comorbidity_count = st.number_input("Comorbidity Count", 0, 15, 2)
-    num_medications = st.number_input("Number of Medications", 0, 50, 10)
+    comorbidity_count = st.number_input("Comorbidity Count",0,15,2)
+    num_medications = st.number_input("Medications",0,50,10)
 
-st.markdown("#### Laboratory & Diagnosis")
+diagnosis_code = st.text_input("ICD-10","I50.9")
+st.caption(f"📘 {explain_icd(diagnosis_code)}")
+st.markdown(
+    '<a href="https://icd.who.int/browse10/2019/en" target="_blank" style="color:#38bdf8;text-decoration:none;">🔗 View Full ICD-10 Reference</a>',
+    unsafe_allow_html=True
+)
 
-col4, col5, col6 = st.columns(3)
+avg_creatinine = st.number_input("Creatinine",0.3,10.0,1.2)
+avg_hemoglobin = st.number_input("Hemoglobin",6.0,20.0,12.0)
+avg_glucose = st.number_input("Glucose",50.0,500.0,110.0)
 
-with col4:
-    diagnosis_code = st.text_input("Primary Diagnosis (ICD-10)", "I50.9")
-
-with col5:
-    avg_creatinine = st.number_input("Creatinine (mg/dL)", 0.3, 10.0, 1.2)
-
-with col6:
-    avg_hemoglobin = st.number_input("Hemoglobin (g/dL)", 6.0, 20.0, 12.0)
-
-avg_glucose = st.number_input("Glucose (mg/dL)", 50.0, 500.0, 110.0)
-
-# =====================================================
-# FEATURE PREP
-# =====================================================
-icd_group = diagnosis_code[0].upper()
-
+# ================= FEATURE =================
 input_data = pd.DataFrame({
-    "age": [age],
-    "length_of_stay": [los],
-    "previous_admissions": [prev_adm],
-    "comorbidity_count": [comorbidity_count],
-    "avg_creatinine": [avg_creatinine],
-    "avg_hemoglobin": [avg_hemoglobin],
-    "avg_glucose": [avg_glucose],
-    "num_medications": [num_medications],
-    "gender_M": [1 if gender == "Male" else 0]
+    "age":[age],
+    "length_of_stay":[los],
+    "previous_admissions":[prev_adm],
+    "comorbidity_count":[comorbidity_count],
+    "avg_creatinine":[avg_creatinine],
+    "avg_hemoglobin":[avg_hemoglobin],
+    "avg_glucose":[avg_glucose],
+    "num_medications":[num_medications],
+    "gender_M":[1 if gender=="Male" else 0]
 })
 
 input_data["los_x_comorb"] = los * comorbidity_count
@@ -129,36 +228,51 @@ for col in feature_columns:
     if col not in input_data.columns:
         input_data[col] = 0
 
-if icd_group in feature_columns:
-    input_data[icd_group] = 1
-
 input_data = input_data[feature_columns]
 
-# =====================================================
-# ANALYZE
-# =====================================================
+# ================= ANALYZE =================
 if st.button("🔍 Analyze Risk"):
 
+    # =========================
+    # PREDICT
+    # =========================
     prob = float(model.predict_proba(input_data)[0][1])
     risk_percent = prob * 100
 
-    if prob >= 0.50:
-        level = "HIGH"
-        color = "#d62828"
-    elif prob >= 0.30:
-        level = "MODERATE"
-        color = "#f77f00"
-    else:
-        level = "LOW"
-        color = "#2a9d8f"
+    # =========================
+    # LOAD THRESHOLD (MODEL)
+    # =========================
+    optimal_threshold = joblib.load("threshold.pkl")
+    high_cutoff = joblib.load("high_cutoff.pkl")
 
-    colA, colB = st.columns([1.3,1])
+    # =========================
+    # MODEL LOGIC (ilmiah)
+    # =========================
+    if prob >= high_cutoff:
+        level_model = "HIGH"
+    elif prob >= optimal_threshold:
+        level_model = "MODERATE"
+    else:
+        level_model = "LOW"
+
+    # =========================
+    # UI LOGIC (user friendly)
+    # =========================
+    if risk_percent >= 50:
+        level, css = "HIGH", "high"
+    elif risk_percent >= 31:
+        level, css = "MODERATE", "medium"
+    else:
+        level, css = "LOW", "low"
+
+    # ===== UI =====
+    colA, colB = st.columns([1.4, 0.9])  # kecilin colB
 
     with colA:
         st.markdown(f"""
-        <div class="risk-card">
-            <div class="risk-number">{risk_percent:.1f}%</div>
-            <div class="risk-label">{level} RISK</div>
+        <div class="risk-box {css}" style="height:230px; display:flex; flex-direction:column; justify-content:center;">
+            <div class="big">{risk_percent:.1f}%</div>
+            <div>{level} RISK</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -168,123 +282,239 @@ if st.button("🔍 Analyze Risk"):
             value=risk_percent,
             number={'suffix': "%"},
             gauge={
-                'axis': {'range': [0,100]},
-                'bar': {'color': color},
-                'steps': [
-                    {'range': [0,30], 'color': "#2a9d8f"},
-                    {'range': [30,50], 'color': "#f77f00"},
-                    {'range': [50,100], 'color': "#d62828"}
-                ],
+                'axis': {'range':[0,100]},
             }
         ))
-        fig.update_layout(height=320)
+
+        fig.update_layout(
+            height=230,  # samain tinggi dengan box
+            margin=dict(l=10, r=10, t=20, b=10)
+        )
+
         st.plotly_chart(fig, use_container_width=True)
 
-    # =====================================================
-    # GENERATE PROFESSIONAL PDF
-    # =====================================================
+    # ===== ANALYSIS =====
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(input_data)
+
+    breakdown = risk_breakdown(input_data, shap_values)
+    top3 = breakdown[:3]
+    confidence = model_confidence(prob)
+
+    st.markdown("### 🧠 Clinical Insights")
+    for r in clinical_reasoning():
+        st.write("•", r)
+
+    # ================= RISK SCORING =================
+        shap_dict = dict(zip(input_data.columns, shap_values[0]))
+
+        # ambil kontribusi terbesar
+        sorted_factors = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)
+
+        top3 = sorted_factors[:3]
+
+        # total score (normalized)
+        total_impact = sum(abs(v) for v in shap_dict.values())
+
+        def scoring_breakdown():
+            result = []
+            for k, v in top3:
+                score = (abs(v) / total_impact) * 100
+                result.append((k, v, score))
+                return result
+
+    # ================= PDF =================
     def generate_pdf():
+        from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
+        from reportlab.lib.utils import ImageReader
 
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
-        elements = []
+
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=40,
+            leftMargin=40,
+            topMargin=40,
+            bottomMargin=40
+        )
+
+        frame = Frame(doc.leftMargin, doc.bottomMargin,
+                    doc.width, doc.height, id='normal')
+
+        doc.addPageTemplates([PageTemplate(id='OneCol', frames=[frame])])
+
         styles = getSampleStyleSheet()
+        elements = []
 
-        report_id = hashlib.sha256(
-            f"{datetime.now()}-{age}-{diagnosis_code}".encode()
-        ).hexdigest()[:12].upper()
+        report_id = datetime.now().strftime("%Y%m%d%H%M")
+        now = datetime.now().strftime("%d %b %Y %H:%M")
 
-        formatted_time = datetime.now().strftime("%d %b %Y | %H:%M")
+        # ================= HEADER =================
+        elements.append(Paragraph("<b>CLINICAL AI ANALYTICS REPORT</b>", styles["Title"]))
+        elements.append(Spacer(1,4))
+        elements.append(Paragraph(f"Report ID: {report_id}", styles["Normal"]))
+        elements.append(Paragraph(f"Generated: {now}", styles["Normal"]))
+        elements.append(Spacer(1,8))
 
-        # HEADER
-        elements.append(Paragraph("<b>CLINICAL AI — OFFICIAL RISK REPORT</b>", styles["Title"]))
-        elements.append(Spacer(1, 0.2 * inch))
-        elements.append(Paragraph("Hospital Clinical Decision Support System", styles["Normal"]))
-        elements.append(Spacer(1, 0.2 * inch))
-        elements.append(Paragraph(f"Report ID: CAI-{report_id}", styles["Normal"]))
-        elements.append(Paragraph(f"Generated: {formatted_time}", styles["Normal"]))
-        elements.append(Spacer(1, 0.4 * inch))
+        # ================= EXEC SUMMARY =================
+        elements.append(Paragraph("<b>EXECUTIVE SUMMARY</b>", styles["Heading2"]))
+        elements.append(Spacer(1,4))
 
-        # PATIENT TABLE
-        data = [
-            ["Age", age],
-            ["Gender", gender],
-            ["Diagnosis Code", diagnosis_code],
-            ["Length of Stay", los],
-            ["Previous Admissions", prev_adm],
-            ["Comorbidity Count", comorbidity_count],
-            ["Number of Medications", num_medications],
-            ["Creatinine (mg/dL)", avg_creatinine],
-            ["Hemoglobin (g/dL)", avg_hemoglobin],
-            ["Glucose (mg/dL)", avg_glucose],
-            ["Predicted Risk (%)", f"{risk_percent:.1f}%"],
-            ["Risk Category", level]
-        ]
+        elements.append(Paragraph(
+            f"""
+            Patient is classified as <b>{level}</b> risk 
+            (<b>{risk_percent:.1f}%</b>) for 30-day readmission.<br/>
+            Risk classification is determined using an optimized threshold derived from ROC curve analysis (Youden Index).<br/>
+            Model confidence is <b>{confidence}</b>. Interpretation should include clinical judgment.
+            """,
+            styles["Normal"]
+        ))
 
-        table = Table(data, colWidths=[230, 230])
-        table.setStyle(TableStyle([
-            ('GRID', (0,0), (-1,-1), 0.3, colors.grey),
-            ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+        elements.append(Spacer(1,6))
+
+        # ================= IMPACT =================
+        elements.append(Paragraph("<b>CLINICAL IMPACT</b>", styles["Heading3"]))
+        elements.append(Paragraph(
+            "Elevated readmission risk may increase hospital burden, cost, and patient complications.",
+            styles["Normal"]
+        ))
+        elements.append(Spacer(1,8))
+
+        # ================= KPI =================
+        kpi = Table([
+            ["RISK SCORE", "RISK LEVEL", "CONFIDENCE"],
+            [f"{risk_percent:.1f}%", level, confidence]
+        ], colWidths=[doc.width/3]*3)
+
+        kpi.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(-1,0),colors.HexColor("#1f3b57")),
+            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('BACKGROUND',(0,1),(-1,1),colors.HexColor("#f8fafc")),
+            ('GRID',(0,0),(-1,-1),0.25,colors.HexColor("#94a3b8")),
+            ('ALIGN',(0,0),(-1,-1),'CENTER'),
+            ('FONTSIZE',(0,0),(-1,-1),9),   # 👈 kecilin font
+            ('BOTTOMPADDING',(0,0),(-1,-1),6),
+            ('TOPPADDING',(0,0),(-1,-1),6),
         ]))
+        elements.append(kpi)
 
-        elements.append(table)
-        elements.append(Spacer(1, 0.6 * inch))
+        elements.append(Spacer(1,10))
 
-        # QR CONTENT
-        qr_text = f"""
-        Clinical AI Official Report
-        Report ID: CAI-{report_id}
-        Risk Level: {level}
-        Probability: {risk_percent:.1f}%
-        Generated: {formatted_time}
-        This is a computer-generated clinical document.
-        """
+        # ================= PROFILE =================
+        elements.append(Paragraph("<b>PATIENT PROFILE</b>", styles["Heading2"]))
 
-        qr = qrcode.make(qr_text)
-        qr_buffer = BytesIO()
-        qr.save(qr_buffer)
-        qr_buffer.seek(0)
+        profile = Table([
+            ["Age", age, "Gender", gender],
+            ["LOS", los, "Prev Adm", prev_adm],
+            ["Creatinine", avg_creatinine, "Glucose", avg_glucose],
+            ["Hemoglobin", avg_hemoglobin, "Comorbidity", comorbidity_count],
+            ["Diagnosis", diagnosis_code, "", ""]
+        ], colWidths=[doc.width/4]*4)
 
-        elements.append(Paragraph("Verification QR Code:", styles["Normal"]))
-        elements.append(Spacer(1, 0.2 * inch))
-        elements.append(Image(qr_buffer, width=1.2*inch, height=1.2*inch))
+        profile.setStyle(TableStyle([
+            ('BACKGROUND',(0,1),(-1,-1),colors.HexColor("#f8fafc")),
+            ('GRID',(0,0),(-1,-1),0.25,colors.HexColor("#cbd5e1")),
+            ('FONTSIZE',(0,0),(-1,-1),9),   # 👈 kecilin font
+            ('BOTTOMPADDING',(0,0),(-1,-1),5),
+            ('TOPPADDING',(0,0),(-1,-1),5),
+        ]))
+        elements.append(profile)
 
-        doc.build(elements)
+        elements.append(Spacer(1,10))
+
+        # ================= TOP FACTORS =================
+        elements.append(Paragraph("<b>TOP RISK FACTORS</b>", styles["Heading2"]))
+
+        top_factors = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[:5]
+
+        names = [k.replace("_", " ") for k, v in top_factors]
+        values = [v for k, v in top_factors]
+
+        fig, ax = plt.subplots()
+        ax.barh(names, values)
+        ax.axvline(0)
+
+        for i, v in enumerate(values):
+            ax.text(v, i, f"{v:.2f}", va='center')
+
+        buf = BytesIO()
+        plt.savefig(buf, bbox_inches='tight')
+        plt.close()
+        buf.seek(0)
+
+        elements.append(Image(buf, width=doc.width, height=190))
+
+        elements.append(Spacer(1,6))
+
+        elements.append(Paragraph(
+            "Key variables contributing to readmission risk based on model explainability.",
+            styles["Normal"]
+        ))
+
+        elements.append(PageBreak())
+
+        # ================= CLINICAL ANALYSIS =================
+        elements.append(Paragraph("<b>CLINICAL INTERPRETATION</b>", styles["Heading2"]))
+
+        for r in clinical_reasoning():
+            elements.append(Paragraph(f"• {r}", styles["Normal"]))
+
+        elements.append(Spacer(1,14))
+
+        # ================= SHAP =================
+        elements.append(Paragraph("<b>MODEL EXPLAINABILITY (SHAP)</b>", styles["Heading2"]))
+
+        try:
+            plt.figure()
+            shap.plots.waterfall(
+                shap.Explanation(
+                    values=shap_values[0],
+                    base_values=explainer.expected_value,
+                    data=input_data.iloc[0],
+                    feature_names=input_data.columns
+                )
+            )
+
+            shap_buf = BytesIO()
+            plt.savefig(shap_buf, bbox_inches='tight')
+            plt.close()
+            shap_buf.seek(0)
+
+            elements.append(Image(shap_buf, width=doc.width, height=250))
+        except:
+            elements.append(Paragraph("SHAP visualization unavailable.", styles["Normal"]))
+
+        elements.append(Spacer(1,14))
+
+        # ================= RECOMMENDATION =================
+        elements.append(Paragraph("<b>CLINICAL RECOMMENDATION</b>", styles["Heading2"]))
+
+        elements.append(Paragraph("<b>Critical Actions</b>", styles["Heading3"]))
+        elements.append(Paragraph("• Delay discharge until stability confirmed", styles["Normal"]))
+        elements.append(Paragraph("• Repeat laboratory evaluation within 24–48 hours", styles["Normal"]))
+
+        elements.append(Paragraph("<b>Moderate Actions</b>", styles["Heading3"]))
+        elements.append(Paragraph("• Optimize medication regimen", styles["Normal"]))
+
+        elements.append(Paragraph("<b>Routine Actions</b>", styles["Heading3"]))
+        elements.append(Paragraph("• Schedule follow-up within 7 days", styles["Normal"]))
+
+        # ================= QR =================
+        qr = qrcode.make(f"AI Clinical Report {report_id}")
+        qr_buf = BytesIO()
+        qr.save(qr_buf)
+        qr_buf.seek(0)
+
+        def footer(canvas, doc):
+            img = ImageReader(qr_buf)
+            canvas.drawImage(img, A4[0]-55, 20, width=30, height=30)
+            canvas.setFont("Helvetica",8)
+            canvas.drawString(40,20,"AI Clinical Decision Support")
+
+        doc.build(elements, onFirstPage=footer, onLaterPages=footer)
+
         buffer.seek(0)
         return buffer
-
     pdf = generate_pdf()
-
-    st.download_button(
-        "📄 Download Official Clinical Report (PDF)",
-        pdf,
-        file_name="Clinical_AI_Official_Report.pdf",
-        mime="application/pdf"
-    )
-
-    st.markdown("### Clinical Recommendation")
-
-    if level == "HIGH":
-        st.markdown("""
-• Delay discharge until stabilization confirmed  
-• Repeat laboratory evaluation within 24 hours  
-• Comprehensive medication reconciliation  
-• Multidisciplinary case review  
-• Schedule follow-up within ≤ 7 days  
-• Evaluate caregiver support  
-""")
-    elif level == "MODERATE":
-        st.markdown("""
-• Confirm discharge readiness  
-• Optimize medication adherence  
-• Structured discharge counseling  
-• Schedule follow-up within ≤ 14 days  
-""")
-    else:
-        st.markdown("""
-• Proceed with standard discharge protocol  
-• Routine outpatient follow-up  
-• Educate patient on warning symptoms  
-""")
-
-    st.caption("Clinical AI — Official Hospital Decision Support Prototype")
+    st.download_button("📄 Download Full AI Report", pdf, "Clinical_Report.pdf")
