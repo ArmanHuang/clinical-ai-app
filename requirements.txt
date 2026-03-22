@@ -7,3 +7,4 @@ matplotlib
 qrcode
 reportlab
 xgboost==2.0.3
+shap==0.44.1
