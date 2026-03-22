@@ -23,7 +23,7 @@ This project aims to assist healthcare professionals in identifying high-risk pa
 
 ---
 
-⚠️ This project is for educational and research purposes only and not intended for real clinical use.
+⚠️ This project is for educational and research purposes only.
 
 ## 📊 Dataset
 
