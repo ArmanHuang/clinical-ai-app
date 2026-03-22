@@ -324,7 +324,7 @@ if st.button("🔍 Analyze Risk"):
                 return result
 
     # ================= PDF =================
-    def generate_pdf():
+    def generate_pdf(shap_dict):
         from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
         from reportlab.lib.utils import ImageReader
 
@@ -516,5 +516,5 @@ if st.button("🔍 Analyze Risk"):
 
         buffer.seek(0)
         return buffer
-    pdf = generate_pdf()
+    pdf = generate_pdf(shap_dict)
     st.download_button("📄 Download Full AI Report", pdf, "Clinical_Report.pdf")
