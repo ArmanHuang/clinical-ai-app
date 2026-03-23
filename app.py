@@ -496,14 +496,7 @@ if st.button("🔍 Analyze Risk"):
         # ================= PAGE 2 =================
         elements.append(PageBreak())
 
-        # ================= CLINICAL =================
-        elements.append(Paragraph("<b>CLINICAL INTERPRETATION</b>", styles["Heading2"]))
-
-        for r in clinical_reasoning():
-            elements.append(Paragraph(f"• {r}", styles["Normal"]))
-
-        elements.append(Spacer(1,6))
-
+       
         # ================= SHAP =================
         elements.append(Paragraph("<b>MODEL EXPLAINABILITY (SHAP)</b>", styles["Heading2"]))
 
@@ -528,6 +521,15 @@ if st.button("🔍 Analyze Risk"):
             elements.append(Paragraph("SHAP visualization unavailable.", styles["Normal"]))
 
         elements.append(Spacer(1,6))
+        
+         # ================= CLINICAL =================
+        elements.append(Paragraph("<b>CLINICAL INTERPRETATION</b>", styles["Heading2"]))
+
+        for r in clinical_reasoning():
+            elements.append(Paragraph(f"• {r}", styles["Normal"]))
+
+        elements.append(Spacer(1,6))
+
 
         # ================= RECOMMENDATION =================
         elements.append(Paragraph("<b>CLINICAL RECOMMENDATION</b>", styles["Heading2"]))
