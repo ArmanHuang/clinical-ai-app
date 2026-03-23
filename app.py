@@ -175,7 +175,7 @@ def risk_breakdown(input_data, shap_values):
 def model_confidence(prob):
     if prob >= 0.8 or prob <= 0.2:
         return "HIGH CONFIDENCE"
-    elif prob >= 0.6 or prob <= 0.4:
+    elif 0.6 <= prob < 0.8 or 0.2 < prob <= 0.4:
         return "MODERATE CONFIDENCE"
     else:
         return "LOW CONFIDENCE"
