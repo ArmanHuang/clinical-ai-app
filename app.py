@@ -149,7 +149,7 @@ def clinical_reasoning():
     r = []
     if age >= 65: r.append("Advanced age reduces physiological reserve.")
     if los >= 7: r.append("Prolonged hospitalization indicates severe condition.")
-    if prev_adm >= 2: r.append("Frequent admissions indicate instability.")
+    if prev_adm >= 2: r.append("Frequent previous admissions increase instability risk.")
     if avg_creatinine > 2: r.append("Renal impairment affects recovery.")
     if avg_glucose > 200: r.append("Hyperglycemia increases complication risk.")
     if avg_hemoglobin < 10: r.append("Anemia delays recovery.")
@@ -365,9 +365,11 @@ if st.button("🔍 Analyze Risk"):
                     explanations.append(f"Polypharmacy {direction} treatment complexity.")
 
             else:
-                explanations.append(f"{name.replace('_',' ')} {direction} risk.")
-
-        return explanations
+                if name == "los_x_comorb":
+                    explanations.append("Interaction between length of stay and comorbidity shows a modest effect on risk.")
+                else:
+                    explanations.append(f"{name.replace('_',' ')} {direction} risk.")
+            return explanations
     # ================= PDF =================
     def generate_pdf(shap_dict):
         from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
@@ -451,8 +453,11 @@ if st.button("🔍 Analyze Risk"):
 
         elements.append(Paragraph(
             f"""
+            This report presents an AI-based prediction of 30-day hospital readmission risk.<br/>
             The patient is classified as <b>{level}</b> risk 
-            (<b>{risk_percent:.1f}%</b>) for 30-day readmission.<br/> Model confidence is <b>{confidence}</b>, indicating the level of certainty of this prediction.<br/>This result should be used as a decision support estimate and interpreted alongside clinical judgment.
+            (<b>{risk_percent:.1f}%</b>).<br/>
+            Model confidence is <b>{confidence.lower()}</b>, indicating the level of certainty in this prediction.<br/>
+            This result should be interpreted as a decision support estimate and validated with clinical judgment.
             """,
             styles["Normal"]
         ))
@@ -555,10 +560,10 @@ if st.button("🔍 Analyze Risk"):
         # ================= RECOMMENDATION =================
         elements.append(Paragraph("<b>CLINICAL RECOMMENDATION</b>", styles["Heading2"]))
 
-        elements.append(Paragraph("• Delay discharge until stability confirmed", styles["Normal"]))
-        elements.append(Paragraph("• Repeat laboratory evaluation within 24–48 hours", styles["Normal"]))
-        elements.append(Paragraph("• Optimize medication regimen", styles["Normal"]))
-        elements.append(Paragraph("• Schedule follow-up within 7 days", styles["Normal"]))
+        elements.append(Paragraph("• Consider closer monitoring due to elevated readmission risk", styles["Normal"]))
+        elements.append(Paragraph("• Optimize glycemic control and anemia management", styles["Normal"]))
+        elements.append(Paragraph("• Review medication regimen for potential optimization", styles["Normal"]))
+        elements.append(Paragraph("• Schedule early follow-up within 7 days", styles["Normal"]))
 
         # ================= QR =================
         qr = qrcode.make(f"Report ID: {report_id}")
