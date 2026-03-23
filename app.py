@@ -325,7 +325,49 @@ if st.button("🔍 Analyze Risk"):
                 score = (abs(v) / total_impact) * 100
                 result.append((k, v, score))
                 return result
+            
+    def generate_factor_explanation(top_factors, input_data):
+        explanations = []
 
+        for name, shap_val in top_factors:
+            actual_value = input_data[name].values[0]
+
+            # arah kontribusi
+            direction = "increases" if shap_val > 0 else "reduces"
+
+            if name == "avg_hemoglobin":
+                if actual_value < 10:
+                    explanations.append(f"Low hemoglobin (anemia) {direction} readmission risk.")
+                else:
+                    explanations.append(f"Hemoglobin level {direction} risk.")
+
+            elif name == "avg_glucose":
+                if actual_value > 200:
+                    explanations.append(f"Elevated glucose level {direction} complication risk.")
+                else:
+                    explanations.append(f"Glucose level {direction} risk.")
+
+            elif name == "avg_creatinine":
+                if actual_value > 2:
+                    explanations.append(f"Renal impairment (high creatinine) {direction} risk.")
+                else:
+                    explanations.append(f"Creatinine level {direction} risk.")
+
+            elif name == "previous_admissions":
+                explanations.append(f"Frequent previous admissions {direction} instability risk.")
+
+            elif name == "age":
+                if actual_value >= 65:
+                    explanations.append(f"Advanced age {direction} readmission risk.")
+
+            elif name == "num_medications":
+                if actual_value >= 15:
+                    explanations.append(f"Polypharmacy {direction} treatment complexity.")
+
+            else:
+                explanations.append(f"{name.replace('_',' ')} {direction} risk.")
+
+        return explanations
     # ================= PDF =================
     def generate_pdf(shap_dict):
         from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
@@ -376,8 +418,8 @@ if st.button("🔍 Analyze Risk"):
             Patient is classified as <b>{level}</b> risk 
             (<b>{risk_percent:.1f}%</b>) for 30-day readmission.<br/>
             Risk classification is derived from a machine learning model using ROC-based thresholding.<br/>
-            Model confidence is <b>{confidence}</b>.<br/>
-            {note}<br/>
+            Model confidence is <b>{confidence}</b>, indicating the level of certainty of this prediction.<br/>
+            This result should be interpreted as a decision support estimate, not a definitive diagnosis.<br/> {note}<br/>
             This output is intended to support clinical decision-making and should not replace professional medical judgment.
             """,
             styles["Normal"]
@@ -460,9 +502,22 @@ if st.button("🔍 Analyze Risk"):
         elements.append(Spacer(1,6))
 
         elements.append(Paragraph(
-            "Key variables contributing to readmission risk based on model explainability.",
+            """
+            The chart above highlights the most influential variables contributing to the prediction.
+            Positive values indicate increased risk, while negative values indicate reduced risk.
+            """,
             styles["Normal"]
         ))
+
+        # 🔥 dynamic explanation
+        top3 = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
+        factor_explanations = generate_factor_explanation(top3, input_data)
+
+        elements.append(Spacer(1,6))
+        elements.append(Paragraph("<b>KEY FACTOR INTERPRETATION</b>", styles["Heading3"]))
+
+        for exp in factor_explanations:
+            elements.append(Paragraph(f"• {exp}", styles["Normal"]))
 
         elements.append(PageBreak())
 
