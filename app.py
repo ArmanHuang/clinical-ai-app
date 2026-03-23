@@ -4,6 +4,7 @@ import pandas as pd
 import joblib
 import plotly.graph_objects as go
 import shap
+import pytz
 import matplotlib.pyplot as plt
 import qrcode
 from xgboost import XGBClassifier
@@ -348,8 +349,8 @@ if st.button("🔍 Analyze Risk"):
         elements = []
 
         report_id = datetime.now().strftime("%Y%m%d%H%M")
-        now = datetime.now().strftime("%d %b %Y %H:%M")
-
+        tz = pytz.timezone("Asia/Jakarta")
+        now = datetime.now(tz).strftime("%d %b %Y %H:%M")
         # ================= HEADER =================
         elements.append(Paragraph("<b>CLINICAL AI ANALYTICS REPORT</b>", styles["Title"]))
         elements.append(Spacer(1,4))
