@@ -521,7 +521,7 @@ if st.button("🔍 Analyze Risk"):
             plt.close()
             shap_buf.seek(0)
 
-            elements.append(Image(shap_buf, width=doc.width, height=200))
+            elements.append(Image(shap_buf, width=doc.width, height=250))
         except:
             elements.append(Paragraph("SHAP visualization unavailable.", styles["Normal"]))
 
