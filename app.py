@@ -420,9 +420,13 @@ if st.button("🔍 Analyze Risk"):
 
         # ================= KPI =================
         kpi = Table([
-            ["RISK SCORE", "RISK LEVEL", "CONFIDENCE"],
-            [f"{risk_percent:.1f}%", level, confidence]
-        ], colWidths=[doc.width/3]*3)
+        ["RISK SCORE", "RISK LEVEL", "CONFIDENCE"],
+        [f"{risk_percent:.1f}%", level, confidence]
+        ],
+        colWidths=[80, 80, 120]  
+        )
+
+        kpi.hAlign = 'CENTER'
 
         kpi.setStyle(TableStyle([
             ('BACKGROUND',(0,0),(-1,0),colors.HexColor("#1f3b57")),
