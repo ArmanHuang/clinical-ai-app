@@ -412,14 +412,35 @@ if st.button("🔍 Analyze Risk"):
             ["Creatinine", avg_creatinine, "Glucose", avg_glucose],
             ["Hemoglobin", avg_hemoglobin, "Comorbidity", comorbidity_count],
             ["Diagnosis", diagnosis_code, "", ""]
-        ], colWidths=[doc.width/5]*5)
+        ], colWidths=[70, 80, 90, 80])
+
+        profile.hAlign = 'CENTER'
 
         profile.setStyle(TableStyle([
-            ('BACKGROUND',(0,1),(-1,-1),colors.HexColor("#f8fafc")),
-            ('GRID',(0,0),(-1,-1),0.25,colors.HexColor("#cbd5e1")),
-            ('FONTSIZE',(0,0),(-1,-1),8),
-            ('BOTTOMPADDING',(0,0),(-1,-1),4),
-            ('TOPPADDING',(0,0),(-1,-1),4),
+
+        # ===== LABEL STYLE =====
+        ('BACKGROUND',(0,0),(0,-1),colors.HexColor("#f1f5f9")),
+        ('BACKGROUND',(2,0),(2,-1),colors.HexColor("#f1f5f9")),
+
+        ('TEXTCOLOR',(0,0),(-1,-1),colors.HexColor("#111827")),
+
+        # ===== VALUE STYLE =====
+        ('BACKGROUND',(1,0),(1,-1),colors.white),
+        ('BACKGROUND',(3,0),(3,-1),colors.white),
+
+        # ===== GRID =====
+        ('GRID',(0,0),(-1,-1),0.3,colors.HexColor("#e2e8f0")),
+
+        # ===== FONT =====
+        ('FONTSIZE',(0,0),(-1,-1),9),
+
+        # ===== PADDING =====
+        ('BOTTOMPADDING',(0,0),(-1,-1),6),
+        ('TOPPADDING',(0,0),(-1,-1),6),
+
+        # ===== ALIGNMENT =====
+        ('ALIGN',(1,0),(1,-1),'CENTER'),
+        ('ALIGN',(3,0),(3,-1),'CENTER'),
         ]))
         elements.append(profile)
 
