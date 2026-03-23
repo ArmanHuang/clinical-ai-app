@@ -509,7 +509,6 @@ if st.button("🔍 Analyze Risk"):
             styles["Normal"]
         ))
 
-        # 🔥 dynamic explanation
         top3 = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
         factor_explanations = generate_factor_explanation(top3, input_data)
 
