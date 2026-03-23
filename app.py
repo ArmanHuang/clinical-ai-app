@@ -542,17 +542,26 @@ if st.button("🔍 Analyze Risk"):
         qr_buf.seek(0)
 
         def footer(canvas, doc):
+            canvas.saveState()
+
+            # ===== QR CODE =====
             img = ImageReader(qr_buf)
 
-            # QR setiap halaman
-            canvas.drawImage(img, A4[0]-80, 30, width=45, height=45)
+            # posisi aman (tidak kena margin)
+            qr_x = A4[0] - 70
+            qr_y = 25
 
-            canvas.setFont("Helvetica",8)
-            canvas.drawString(40,25,"AI Clinical Decision Support")
+            canvas.drawImage(img, qr_x, qr_y, width=40, height=40)
 
-            # page number
+            # ===== LEFT TEXT =====
+            canvas.setFont("Helvetica", 8)
+            canvas.drawString(40, 30, "AI Clinical Decision Support")
+
+            # ===== PAGE NUMBER =====
             page_num = canvas.getPageNumber()
-            canvas.drawRightString(A4[0]-40,25,f"Page {page_num}")
+            canvas.drawRightString(A4[0] - 40, 30, f"Page {page_num}")
+
+            canvas.restoreState()
 
         doc.build(elements, onFirstPage=footer, onLaterPages=footer)
 
