@@ -173,9 +173,11 @@ def risk_breakdown(input_data, shap_values):
     return sorted(data, key=lambda x: abs(x[1]), reverse=True)
 
 def model_confidence(prob):
-    if prob >= 0.8 or prob <= 0.2:
+    distance = abs(prob - 0.5)
+
+    if distance >= 0.3:
         return "HIGH CONFIDENCE"
-    elif 0.6 <= prob < 0.8 or 0.2 < prob <= 0.4:
+    elif distance >= 0.1:
         return "MODERATE CONFIDENCE"
     else:
         return "LOW CONFIDENCE"
