@@ -453,7 +453,7 @@ if st.button("🔍 Analyze Risk"):
         ]))
         elements.append(kpi)
 
-        elements.append(Spacer(1,10))
+        elements.append(Spacer(1,6))
 
         # ================= PROFILE =================
         elements.append(Paragraph("<b>PATIENT PROFILE</b>", styles["Heading2"]))
@@ -497,7 +497,7 @@ if st.button("🔍 Analyze Risk"):
         plt.close()
         buf.seek(0)
 
-        elements.append(Image(buf, width=doc.width, height=190))
+        elements.append(Image(buf, width=doc.width, height=180))
 
         elements.append(Spacer(1,6))
 
