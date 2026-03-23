@@ -365,7 +365,7 @@ if st.button("🔍 Analyze Risk"):
         elements.append(Spacer(1,4))
 
         if confidence == "LOW CONFIDENCE":
-            note = "⚠️ The prediction is close to the decision boundary, indicating higher uncertainty."
+            note = "The prediction is close to the decision boundary, indicating higher uncertainty."
         elif confidence == "MODERATE CONFIDENCE":
             note = "The prediction shows moderate certainty and should be interpreted with caution."
         else:
