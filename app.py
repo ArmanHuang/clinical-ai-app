@@ -501,16 +501,7 @@ if st.button("🔍 Analyze Risk"):
 
         elements.append(Spacer(1,6))
 
-        elements.append(Paragraph(
-            f"""
-            The patient is classified as <b>{level}</b> risk 
-            (<b>{risk_percent:.1f}%</b>) for 30-day readmission.<br/><br/>
-
-            Model confidence is <b>{confidence}</b>. This prediction should be used 
-            as a clinical decision support tool and interpreted alongside professional judgment.
-            """,
-            styles["Normal"]
-        ))
+        
         top3 = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
         factor_explanations = generate_factor_explanation(top3, input_data)
 
