@@ -412,7 +412,7 @@ if st.button("🔍 Analyze Risk"):
             ["Creatinine", avg_creatinine, "Glucose", avg_glucose],
             ["Hemoglobin", avg_hemoglobin, "Comorbidity", comorbidity_count],
             ["Diagnosis", diagnosis_code, "", ""]
-        ], colWidths=[doc.width/4]*4)
+        ], colWidths=[doc.width/3]*3)
 
         profile.setStyle(TableStyle([
             ('BACKGROUND',(0,1),(-1,-1),colors.HexColor("#f8fafc")),
