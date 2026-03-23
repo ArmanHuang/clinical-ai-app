@@ -480,7 +480,7 @@ if st.button("🔍 Analyze Risk"):
         plt.close()
         buf.seek(0)
 
-        elements.append(Image(buf, width=doc.width, height=130))
+        elements.append(Image(buf, width=doc.width, height=180))
 
         # dynamic explanation
         top3 = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
