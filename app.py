@@ -403,6 +403,28 @@ if st.button("🔍 Analyze Risk"):
         elements.append(Paragraph(f"Generated: {now}", styles["Normal"]))
         elements.append(Spacer(1,6))
 
+        # ================= PROFILE =================
+        elements.append(Paragraph("<b>PATIENT PROFILE</b>", styles["Heading2"]))
+
+        profile = Table([
+            ["Age", age, "Gender", gender],
+            ["LOS", los, "Prev Adm", prev_adm],
+            ["Creatinine", avg_creatinine, "Glucose", avg_glucose],
+            ["Hemoglobin", avg_hemoglobin, "Comorbidity", comorbidity_count],
+            ["Diagnosis", diagnosis_code, "", ""]
+        ], colWidths=[doc.width/4]*4)
+
+        profile.setStyle(TableStyle([
+            ('BACKGROUND',(0,1),(-1,-1),colors.HexColor("#f8fafc")),
+            ('GRID',(0,0),(-1,-1),0.25,colors.HexColor("#cbd5e1")),
+            ('FONTSIZE',(0,0),(-1,-1),8),
+            ('BOTTOMPADDING',(0,0),(-1,-1),4),
+            ('TOPPADDING',(0,0),(-1,-1),4),
+        ]))
+        elements.append(profile)
+
+        elements.append(Spacer(1,6))
+        
         # ================= EXEC SUMMARY =================
         elements.append(Paragraph("<b>EXECUTIVE SUMMARY</b>", styles["Heading2"]))
 
@@ -437,28 +459,6 @@ if st.button("🔍 Analyze Risk"):
             ('TOPPADDING',(0,0),(-1,-1),5),
         ]))
         elements.append(kpi)
-
-        elements.append(Spacer(1,6))
-
-        # ================= PROFILE =================
-        elements.append(Paragraph("<b>PATIENT PROFILE</b>", styles["Heading2"]))
-
-        profile = Table([
-            ["Age", age, "Gender", gender],
-            ["LOS", los, "Prev Adm", prev_adm],
-            ["Creatinine", avg_creatinine, "Glucose", avg_glucose],
-            ["Hemoglobin", avg_hemoglobin, "Comorbidity", comorbidity_count],
-            ["Diagnosis", diagnosis_code, "", ""]
-        ], colWidths=[doc.width/4]*4)
-
-        profile.setStyle(TableStyle([
-            ('BACKGROUND',(0,1),(-1,-1),colors.HexColor("#f8fafc")),
-            ('GRID',(0,0),(-1,-1),0.25,colors.HexColor("#cbd5e1")),
-            ('FONTSIZE',(0,0),(-1,-1),8),
-            ('BOTTOMPADDING',(0,0),(-1,-1),4),
-            ('TOPPADDING',(0,0),(-1,-1),4),
-        ]))
-        elements.append(profile)
 
         elements.append(Spacer(1,6))
 
