@@ -364,12 +364,21 @@ if st.button("🔍 Analyze Risk"):
         elements.append(Paragraph("<b>EXECUTIVE SUMMARY</b>", styles["Heading2"]))
         elements.append(Spacer(1,4))
 
+        if confidence == "LOW CONFIDENCE":
+            note = "⚠️ The prediction is close to the decision boundary, indicating higher uncertainty."
+        elif confidence == "MODERATE CONFIDENCE":
+            note = "The prediction shows moderate certainty and should be interpreted with caution."
+        else:
+            note = "The prediction shows high certainty based on model output."
+
         elements.append(Paragraph(
             f"""
             Patient is classified as <b>{level}</b> risk 
             (<b>{risk_percent:.1f}%</b>) for 30-day readmission.<br/>
-            Risk classification is determined using an optimized threshold derived from ROC curve analysis (Youden Index).<br/>
-            Model confidence is <b>{confidence}</b>. Interpretation should include clinical judgment.
+            Risk classification is derived from a machine learning model using ROC-based thresholding.<br/>
+            Model confidence is <b>{confidence}</b>.<br/>
+            {note}<br/>
+            This output is intended to support clinical decision-making and should not replace professional medical judgment.
             """,
             styles["Normal"]
         ))
