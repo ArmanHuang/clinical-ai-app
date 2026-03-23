@@ -395,45 +395,27 @@ if st.button("🔍 Analyze Risk"):
         report_id = datetime.now().strftime("%Y%m%d%H%M")
         tz = pytz.timezone("Asia/Jakarta")
         now = datetime.now(tz).strftime("%d %b %Y %H:%M")
+
         # ================= HEADER =================
         elements.append(Paragraph("<b>CLINICAL AI ANALYTICS REPORT</b>", styles["Title"]))
         elements.append(Spacer(1,4))
         elements.append(Paragraph(f"Report ID: {report_id}", styles["Normal"]))
         elements.append(Paragraph(f"Generated: {now}", styles["Normal"]))
-        elements.append(Spacer(1,8))
+        elements.append(Spacer(1,6))
 
         # ================= EXEC SUMMARY =================
         elements.append(Paragraph("<b>EXECUTIVE SUMMARY</b>", styles["Heading2"]))
-        elements.append(Spacer(1,4))
-
-        if confidence == "LOW CONFIDENCE":
-            note = "The prediction is close to the decision boundary, indicating higher uncertainty."
-        elif confidence == "MODERATE CONFIDENCE":
-            note = "The prediction shows moderate certainty and should be interpreted with caution."
-        else:
-            note = "The prediction shows high certainty based on model output."
 
         elements.append(Paragraph(
             f"""
-            Patient is classified as <b>{level}</b> risk 
+            The patient is classified as <b>{level}</b> risk 
             (<b>{risk_percent:.1f}%</b>) for 30-day readmission.<br/>
-            Risk classification is derived from a machine learning model using ROC-based thresholding.<br/>
-            Model confidence is <b>{confidence}</b>, indicating the level of certainty of this prediction.<br/>
-            This result should be interpreted as a decision support estimate, not a definitive diagnosis.<br/> {note}<br/>
-            This output is intended to support clinical decision-making and should not replace professional medical judgment.
+            Model confidence is <b>{confidence}</b>.
             """,
             styles["Normal"]
         ))
 
         elements.append(Spacer(1,6))
-
-        # ================= IMPACT =================
-        elements.append(Paragraph("<b>CLINICAL IMPACT</b>", styles["Heading3"]))
-        elements.append(Paragraph(
-            "Elevated readmission risk may increase hospital burden, cost, and patient complications.",
-            styles["Normal"]
-        ))
-        elements.append(Spacer(1,8))
 
         # ================= KPI =================
         kpi = Table([
@@ -447,9 +429,9 @@ if st.button("🔍 Analyze Risk"):
             ('BACKGROUND',(0,1),(-1,1),colors.HexColor("#f8fafc")),
             ('GRID',(0,0),(-1,-1),0.25,colors.HexColor("#94a3b8")),
             ('ALIGN',(0,0),(-1,-1),'CENTER'),
-            ('FONTSIZE',(0,0),(-1,-1),9),   # 👈 kecilin font
-            ('BOTTOMPADDING',(0,0),(-1,-1),6),
-            ('TOPPADDING',(0,0),(-1,-1),6),
+            ('FONTSIZE',(0,0),(-1,-1),8),
+            ('BOTTOMPADDING',(0,0),(-1,-1),5),
+            ('TOPPADDING',(0,0),(-1,-1),5),
         ]))
         elements.append(kpi)
 
@@ -469,13 +451,13 @@ if st.button("🔍 Analyze Risk"):
         profile.setStyle(TableStyle([
             ('BACKGROUND',(0,1),(-1,-1),colors.HexColor("#f8fafc")),
             ('GRID',(0,0),(-1,-1),0.25,colors.HexColor("#cbd5e1")),
-            ('FONTSIZE',(0,0),(-1,-1),9),   # 👈 kecilin font
-            ('BOTTOMPADDING',(0,0),(-1,-1),5),
-            ('TOPPADDING',(0,0),(-1,-1),5),
+            ('FONTSIZE',(0,0),(-1,-1),8),
+            ('BOTTOMPADDING',(0,0),(-1,-1),4),
+            ('TOPPADDING',(0,0),(-1,-1),4),
         ]))
         elements.append(profile)
 
-        elements.append(Spacer(1,10))
+        elements.append(Spacer(1,6))
 
         # ================= TOP FACTORS =================
         elements.append(Paragraph("<b>TOP RISK FACTORS</b>", styles["Heading2"]))
@@ -497,29 +479,27 @@ if st.button("🔍 Analyze Risk"):
         plt.close()
         buf.seek(0)
 
-        elements.append(Image(buf, width=doc.width, height=170))
+        elements.append(Image(buf, width=doc.width, height=130))
 
-        elements.append(Spacer(1,6))
-
-        
+        # dynamic explanation
         top3 = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
         factor_explanations = generate_factor_explanation(top3, input_data)
 
-        elements.append(Spacer(1,6))
         elements.append(Paragraph("<b>KEY FACTOR INTERPRETATION</b>", styles["Heading3"]))
 
         for exp in factor_explanations:
             elements.append(Paragraph(f"• {exp}", styles["Normal"]))
 
+        # ================= PAGE 2 =================
         elements.append(PageBreak())
 
-        # ================= CLINICAL ANALYSIS =================
+        # ================= CLINICAL =================
         elements.append(Paragraph("<b>CLINICAL INTERPRETATION</b>", styles["Heading2"]))
 
         for r in clinical_reasoning():
             elements.append(Paragraph(f"• {r}", styles["Normal"]))
 
-        elements.append(Spacer(1,14))
+        elements.append(Spacer(1,6))
 
         # ================= SHAP =================
         elements.append(Paragraph("<b>MODEL EXPLAINABILITY (SHAP)</b>", styles["Heading2"]))
@@ -540,36 +520,38 @@ if st.button("🔍 Analyze Risk"):
             plt.close()
             shap_buf.seek(0)
 
-            elements.append(Image(shap_buf, width=doc.width, height=250))
+            elements.append(Image(shap_buf, width=doc.width, height=200))
         except:
             elements.append(Paragraph("SHAP visualization unavailable.", styles["Normal"]))
 
-        elements.append(Spacer(1,14))
+        elements.append(Spacer(1,6))
 
         # ================= RECOMMENDATION =================
         elements.append(Paragraph("<b>CLINICAL RECOMMENDATION</b>", styles["Heading2"]))
 
-        elements.append(Paragraph("<b>Critical Actions</b>", styles["Heading3"]))
         elements.append(Paragraph("• Delay discharge until stability confirmed", styles["Normal"]))
         elements.append(Paragraph("• Repeat laboratory evaluation within 24–48 hours", styles["Normal"]))
-
-        elements.append(Paragraph("<b>Moderate Actions</b>", styles["Heading3"]))
         elements.append(Paragraph("• Optimize medication regimen", styles["Normal"]))
-
-        elements.append(Paragraph("<b>Routine Actions</b>", styles["Heading3"]))
         elements.append(Paragraph("• Schedule follow-up within 7 days", styles["Normal"]))
 
         # ================= QR =================
-        qr = qrcode.make(f"AI Clinical Report {report_id}")
+        qr = qrcode.make(f"Report ID: {report_id}")
         qr_buf = BytesIO()
         qr.save(qr_buf)
         qr_buf.seek(0)
 
         def footer(canvas, doc):
             img = ImageReader(qr_buf)
-            canvas.drawImage(img, A4[0]-55, 20, width=30, height=30)
+
+            # QR setiap halaman
+            canvas.drawImage(img, A4[0]-80, 30, width=45, height=45)
+
             canvas.setFont("Helvetica",8)
-            canvas.drawString(40,20,"AI Clinical Decision Support")
+            canvas.drawString(40,25,"AI Clinical Decision Support")
+
+            # page number
+            page_num = canvas.getPageNumber()
+            canvas.drawRightString(A4[0]-40,25,f"Page {page_num}")
 
         doc.build(elements, onFirstPage=footer, onLaterPages=footer)
 
