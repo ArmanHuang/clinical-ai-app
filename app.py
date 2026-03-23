@@ -410,7 +410,8 @@ if st.button("🔍 Analyze Risk"):
             f"""
             The patient is classified as <b>{level}</b> risk 
             (<b>{risk_percent:.1f}%</b>) for 30-day readmission.<br/>
-            Model confidence is <b>{confidence}</b>.
+            Model confidence is <b>{confidence}</b>, indicating the level of certainty of this prediction.<br/>
+            This result should be used as a decision support estimate and interpreted alongside clinical judgment.
             """,
             styles["Normal"]
         ))
