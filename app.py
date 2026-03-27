@@ -406,6 +406,7 @@ if st.button("🔍 Analyze Risk"):
         elements.append(Spacer(1,6))
 
         # ================= PROFILE =================
+        diagnosis_desc = explain_icd(diagnosis_code)
         elements.append(Paragraph("<b>PATIENT PROFILE</b>", styles["Heading2"]))
 
         profile = Table([
@@ -413,8 +414,8 @@ if st.button("🔍 Analyze Risk"):
             ["LOS", los, "Prev Adm", prev_adm],
             ["Creatinine", avg_creatinine, "Glucose", avg_glucose],
             ["Hemoglobin", avg_hemoglobin, "Comorbidity", comorbidity_count],
-            ["Diagnosis", diagnosis_code, "", ""]
-        ], colWidths=[70, 80, 90, 80])
+            ["Diagnosis", diagnosis_code, "Category", diagnosis_desc]
+        ], colWidths=[90, 110, 110, 170])
 
         profile.hAlign = 'CENTER'
 
@@ -434,11 +435,12 @@ if st.button("🔍 Analyze Risk"):
         ('GRID',(0,0),(-1,-1),0.3,colors.HexColor("#e2e8f0")),
 
         # ===== FONT =====
-        ('FONTSIZE',(0,0),(-1,-1),9),
-
+        ('FONTSIZE',(0,0),(-1,-1),11),
         # ===== PADDING =====
-        ('BOTTOMPADDING',(0,0),(-1,-1),6),
-        ('TOPPADDING',(0,0),(-1,-1),6),
+        ('BOTTOMPADDING',(0,0),(-1,-1),10),
+        ('TOPPADDING',(0,0),(-1,-1),10),
+        ('LEFTPADDING',(0,0),(-1,-1),8),
+        ('RIGHTPADDING',(0,0),(-1,-1),8),
 
         # ===== ALIGNMENT =====
         ('ALIGN',(1,0),(1,-1),'CENTER'),
@@ -469,7 +471,7 @@ if st.button("🔍 Analyze Risk"):
         ["RISK SCORE", "RISK LEVEL", "CONFIDENCE"],
         [f"{risk_percent:.1f}%", level, confidence]
         ],
-        colWidths=[80, 80, 120]  
+        colWidths=[100, 100, 200]  
         )
 
         kpi.hAlign = 'CENTER'
